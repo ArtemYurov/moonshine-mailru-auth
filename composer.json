@@ -1,0 +1,46 @@
+{
+    "name": "artemyurov/moonshine-mailru-auth",
+    "description": "OAuth-авторизация через Mail.ru для MoonShine 4.x с кнопкой на странице логина и раскрывающейся стандартной формой админа",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "moonshine",
+        "laravel",
+        "oauth",
+        "mailru",
+        "vkid",
+        "auth"
+    ],
+    "require": {
+        "php": "^8.3",
+        "illuminate/support": "^11.0|^12.0",
+        "illuminate/http": "^11.0|^12.0",
+        "illuminate/routing": "^11.0|^12.0",
+        "moonshine/moonshine": "^4.0",
+        "saloonphp/saloon": "^3.0",
+        "saloonphp/laravel-plugin": "^3.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0",
+        "phpunit/phpunit": "^10.5|^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ArtemYurov\\MailRuAuth\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ArtemYurov\\MailRuAuth\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "ArtemYurov\\MailRuAuth\\Providers\\MailRuAuthServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
