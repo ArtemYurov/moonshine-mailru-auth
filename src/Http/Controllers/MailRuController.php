@@ -6,6 +6,7 @@ namespace ArtemYurov\MailRuAuth\Http\Controllers;
 
 use ArtemYurov\MailRuAuth\Http\Integrations\MailRu\MailRuConnector;
 use ArtemYurov\MailRuAuth\Http\Integrations\MailRu\Requests\UserinfoRequest;
+use Illuminate\Auth\EloquentUserProvider;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -93,20 +94,44 @@ final class MailRuController
     }
 
     /**
+     * Определяет Eloquent-модель пользователя для поиска по email.
+     *
+     * Приоритет:
+     *   1. Явный override в config('mailru-auth.user_model') — если задан класс.
+     *   2. Авто-резолв из MoonShine guard (config/auth.providers.<provider>.model).
+     *      Это гарантирует, что найденный пользователь и guard работают с одной
+     *      и той же таблицей — иначе loginUsingId() залогинит «не того» по id.
+     *
      * @return class-string<Model>
      */
     private function resolveUserModel(): string
     {
-        $model = (string) config('mailru-auth.user_model', '\\App\\Models\\User');
+        $configured = config('mailru-auth.user_model');
 
-        if (!class_exists($model)) {
+        if (is_string($configured) && $configured !== '') {
+            if (!class_exists($configured)) {
+                throw new \RuntimeException(
+                    "MailRu Auth: модель пользователя {$configured} не найдена. "
+                    . 'Укажите корректный класс в config/mailru-auth.php => user_model '
+                    . 'или оставьте null для авто-резолва из MoonShine guard.'
+                );
+            }
+
+            return $configured;
+        }
+
+        $provider = MoonShineAuth::getProvider();
+
+        if (!$provider instanceof EloquentUserProvider) {
             throw new \RuntimeException(
-                "MailRu Auth: модель пользователя {$model} не найдена. "
-                . "Укажите корректный класс в config/mailru-auth.php => user_model."
+                'MailRu Auth: MoonShine guard "' . MoonShineAuth::getGuardName() . '" '
+                . 'использует не Eloquent-провайдер (' . $provider::class . '). '
+                . 'Авто-резолв модели невозможен — укажите класс явно в '
+                . 'config/mailru-auth.php => user_model.'
             );
         }
 
-        return $model;
+        return $provider->getModel();
     }
 
     private function redirectWithError(string $message): RedirectResponse

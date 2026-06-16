@@ -16,7 +16,8 @@ OAuth-авторизация через Mail.ru для MoonShine 4.x.
 - Кнопка `MailRuAuth` на странице логина — OAuth Authorization Code grant через Saloon
 - `CollapsibleAdminLogin` — Alpine.js аккордеон для стандартной формы MoonShine
 - Готовый `MailRuLoginPage` (можно extends'ить)
-- Конфигурируемая модель пользователя и поле для поиска по email
+- Авто-резолв модели пользователя из MoonShine guard (можно переопределить)
+- Конфигурируемое поле для поиска по email
 - Нормальная обработка ошибок: `Log::error()` + flash-алерт через `<x-moonshine::alert>` + `toast()`
 - Поддержка `prompt_force` (выбор другого аккаунта Mail.ru)
 
@@ -88,8 +89,9 @@ return [
     'client_secret'   => env('MAILRU_CLIENT_SECRET'),
     'redirect_uri'    => env('MAILRU_REDIRECT_URI', '<APP_URL>/mailru/callback'),
 
-    // Модель Eloquent для поиска пользователя
-    'user_model'      => \App\Models\User::class,
+    // null = модель берётся из MoonShine guard (рекомендуется).
+    // Явный класс — для не-Eloquent guard'а или поиска в отдельной таблице.
+    'user_model'      => null,
 
     // Поле, по которому ищется пользователь
     'email_field'     => 'email',
@@ -98,6 +100,28 @@ return [
     'register_routes' => true,
 ];
 ```
+
+### Модель пользователя
+
+По умолчанию пакет берёт класс модели **из MoonShine guard** — той же, через
+которую потом происходит `loginUsingId()`. Это исключает рассинхрон: если
+пакет ищет email в одной таблице, а guard логинит по id в другой, можно
+случайно залогинить чужого пользователя с совпавшим id.
+
+Цепочка резолва:
+
+```
+config('mailru-auth.user_model')          // явный override
+       ↓ null
+MoonShineAuth::getProvider()->getModel()  // ← дефолт
+       ↓
+config('auth.guards.<moonshine guard>.provider')
+       ↓
+config('auth.providers.<provider>.model')
+```
+
+Если MoonShine guard использует не Eloquent-провайдер (JWT/Sanctum/API), пакет
+выбросит `RuntimeException` с подсказкой указать `user_model` явно.
 
 ## Использование
 
@@ -166,7 +190,7 @@ Views скопируются в `resources/views/vendor/mailru-auth/`. Можн�
 2. Submit → `POST /mailru/auth` → редирект на `https://o2.mail.ru/login` с client_id и scope `userinfo`
 3. Callback `GET /mailru/callback?code=...&state=...` → обмен на access_token
 4. Запрос `GET /userinfo` → email пользователя
-5. Поиск по `config('mailru-auth.user_model')` через `config('mailru-auth.email_field')`
+5. Поиск по модели пользователя (override из конфига либо авто из MoonShine guard) через `config('mailru-auth.email_field')`
 6. Логин через `MoonShineAuth::getGuard()->loginUsingId()`
 7. Редирект на `moonshineConfig()->getHomeRoute()`
 
