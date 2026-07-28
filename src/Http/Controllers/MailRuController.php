@@ -90,7 +90,8 @@ final class MailRuController
 
         MoonShineAuth::getGuard()->loginUsingId($user->getKey(), $remember);
 
-        return redirect()->route(moonshineConfig()->getHomeRoute());
+        // intended, чтобы вернуть пользователя на исходный URL (например, /oauth/authorize)
+        return redirect()->intended(route(moonshineConfig()->getHomeRoute()));
     }
 
     /**
