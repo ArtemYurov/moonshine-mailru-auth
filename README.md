@@ -96,6 +96,9 @@ return [
     // Поле, по которому ищется пользователь
     'email_field'     => 'email',
 
+    // Переключатель «Запомнить меня» на странице логина включён по умолчанию
+    'remember_default' => true,
+
     // Регистрировать роуты mailru.auth / mailru.callback автоматически
     'register_routes' => true,
 ];

@@ -29,6 +29,7 @@ final class MailRuAuth extends MoonShineComponent
 
         $this->components = Components::make([
             Switcher::make('Запомнить меня', 'remember')
+                ->setValue((bool) config('mailru-auth.remember_default', true))
                 ->customWrapperAttributes(['style' => 'margin-top: 0.25rem;']),
 
             Switcher::make('Выбрать другого пользователя Mail.ru', 'prompt_force')
